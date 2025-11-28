@@ -1,0 +1,96 @@
+
+services:
+  eventstoredb:
+    image: eventstore/eventstore:23.10.0-bookworm-slim
+    container_name: fantasysport-eventstoredb
+    env_file:
+      - .env
+    environment:
+      # Cluster Configuration
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=${EVENTSTOREDB_RUN_PROJECTIONS:-All}
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=${EVENTSTOREDB_START_STANDARD_PROJECTIONS:-true}
+
+      # Network Configuration
+      - EVENTSTORE_INT_TCP_PORT=1112
+      - EVENTSTORE_EXT_TCP_PORT=${EVENTSTOREDB_TCP_PORT:-1113}
+      - EVENTSTORE_HTTP_PORT=${EVENTSTOREDB_HTTP_PORT:-2113}
+      - EVENTSTORE_ENABLE_EXTERNAL_TCP=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+
+      # Security Configuration (Development only)
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_DISABLE_INTERNAL_TCP_TLS=true
+      - EVENTSTORE_DISABLE_EXTERNAL_TCP_TLS=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+
+      # Database Configuration
+      - EVENTSTORE_MEM_DB=false
+      - EVENTSTORE_DB=/var/lib/eventstore
+      - EVENTSTORE_INDEX=/var/lib/eventstore/index
+      - EVENTSTORE_LOG=/var/log/eventstore
+
+      # Performance Tuning
+      - EVENTSTORE_CHUNK_SIZE=${EVENTSTOREDB_CHUNK_SIZE:-268435456}
+      - EVENTSTORE_CHUNKS_CACHE_SIZE=${EVENTSTOREDB_CHUNK_CACHE_SIZE:-536871424}
+      - EVENTSTORE_MAX_MEM_TABLE_SIZE=${EVENTSTOREDB_MAX_MEM_TABLE_SIZE:-1000000}
+      - EVENTSTORE_HASH_COLLISION_READ_LIMIT=100
+
+      # Scavenging (for data maintenance)
+      - EVENTSTORE_SCAVENGE_HISTORY_MAX_AGE=${EVENTSTOREDB_SCAVENGE_HISTORY_MAX_AGE:-30}
+
+      # Stream Configuration
+      - EVENTSTORE_MAX_APPEND_SIZE=${EVENTSTOREDB_MAX_APPEND_SIZE:-1048576}
+
+      # Logging
+      - EVENTSTORE_LOG_LEVEL=${EVENTSTOREDB_LOG_LEVEL:-Information}
+
+    ports:
+      - "1113:1113"  # TCP External (Client connections)
+      - "2113:2113"  # HTTP (Admin UI & HTTP API)
+
+    volumes:
+      - eventstoredb-data:/var/lib/eventstore
+      - eventstoredb-logs:/var/log/eventstore
+
+    networks:
+      - fantasysport-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2113/health/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # EventStoreDB Admin UI (optional, for development)
+  eventstoredb-ui:
+    image: eventstore/eventstore:23.10.0-bookworm-slim
+    container_name: fantasysport-eventstoredb-ui
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_INSECURE=false
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+    ports:
+      - "2114:2113"  # Alternative port for UI access
+    depends_on:
+      - eventstoredb
+    networks:
+      - fantasysport-network
+    profiles:
+      - dev
+      - development
+
+volumes:
+  eventstoredb-data:
+    external: true
+  eventstoredb-logs:
+    external: true
+
+networks:
+  fantasysport-network:
+    driver: bridge
+    name: fantasysport-network
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

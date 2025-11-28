@@ -1,0 +1,46 @@
+
+services:
+  redis:
+    image: ${REDIS_IMAGE:-redis:7.2}
+    container_name: ${REDIS_CONTAINER_NAME:-fantasy-sport-redis}
+    restart: ${REDIS_RESTART_POLICY:-always}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY}
+      - REDIS_MAXMEMORY_POLICY=${REDIS_MAXMEMORY_POLICY}
+      - REDIS_APPENDONLY=${REDIS_APPENDONLY}
+    networks:
+      - redis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-commander:
+    container_name: ${REDIS_COMMANDER_CONTAINER_NAME:-redis-commander}
+    image: ${REDIS_COMMANDER_IMAGE:-rediscommander/redis-commander:latest}
+    environment:
+      - REDIS_HOSTS=${REDIS_COMMANDER_REDIS_HOST:-local}:${REDIS_COMMANDER_REDIS_HOST:-redis}:${REDIS_COMMANDER_REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_COMMANDER_HTTP_AUTH_USER=${REDIS_COMMANDER_HTTP_AUTH_USER}
+      - REDIS_COMMANDER_HTTP_AUTH_PASSWORD=${REDIS_COMMANDER_HTTP_AUTH_PASSWORD}
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8091}:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - redis-network
+    restart: unless-stopped
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  redis-data:

@@ -1,0 +1,149 @@
+
+services:
+  # Zookeeper - Cluster coordination
+  zookeeper:
+    image: confluentinc/cp-zookeeper:${KAFKA_IMAGE_VERSION}
+    container_name: ${ZOOKEEPER_CONTAINER_NAME}
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+    ports:
+      - "${ZOOKEEPER_EXTERNAL_PORT}:${ZOOKEEPER_CLIENT_PORT}"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "${ZOOKEEPER_CLIENT_PORT}"]
+      interval: ${ZOOKEEPER_HEALTHCHECK_INTERVAL}
+      timeout: ${ZOOKEEPER_HEALTHCHECK_TIMEOUT}
+      retries: ${ZOOKEEPER_HEALTHCHECK_RETRIES}
+
+  # Kafka Broker 1
+  kafka-1:
+    image: confluentinc/cp-kafka:${KAFKA_IMAGE_VERSION}
+    container_name: ${KAFKA_1_CONTAINER_NAME}
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_1_INTERNAL_PORT}:${KAFKA_1_INTERNAL_PORT}"
+      - "${KAFKA_1_HOST_EXTERNAL_PORT}:${KAFKA_1_EXTERNAL_PORT}"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_1_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:${KAFKA_1_INTERNAL_PORT},PLAINTEXT_HOST://localhost:${KAFKA_1_EXTERNAL_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+      KAFKA_COMPRESSION_TYPE: ${KAFKA_COMPRESSION_TYPE}
+      KAFKA_LOG_RETENTION_MS: ${KAFKA_LOG_RETENTION_MS}
+      KAFKA_MIN_INSYNC_REPLICAS: ${KAFKA_MIN_INSYNC_REPLICAS}
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:${KAFKA_1_INTERNAL_PORT}"]
+      interval: ${KAFKA_HEALTHCHECK_INTERVAL}
+      timeout: ${KAFKA_HEALTHCHECK_TIMEOUT}
+      retries: ${KAFKA_HEALTHCHECK_RETRIES}
+
+  # Kafka Broker 2
+  kafka-2:
+    image: confluentinc/cp-kafka:${KAFKA_IMAGE_VERSION}
+    container_name: ${KAFKA_2_CONTAINER_NAME}
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_2_INTERNAL_PORT}:${KAFKA_2_INTERNAL_PORT}"
+      - "${KAFKA_2_HOST_EXTERNAL_PORT}:${KAFKA_2_EXTERNAL_PORT}"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_2_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:${KAFKA_2_INTERNAL_PORT},PLAINTEXT_HOST://localhost:${KAFKA_2_EXTERNAL_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+      KAFKA_COMPRESSION_TYPE: ${KAFKA_COMPRESSION_TYPE}
+      KAFKA_LOG_RETENTION_MS: ${KAFKA_LOG_RETENTION_MS}
+      KAFKA_MIN_INSYNC_REPLICAS: ${KAFKA_MIN_INSYNC_REPLICAS}
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:${KAFKA_2_INTERNAL_PORT}"]
+      interval: ${KAFKA_HEALTHCHECK_INTERVAL}
+      timeout: ${KAFKA_HEALTHCHECK_TIMEOUT}
+      retries: ${KAFKA_HEALTHCHECK_RETRIES}
+
+  # Kafka Broker 3
+  kafka-3:
+    image: confluentinc/cp-kafka:${KAFKA_IMAGE_VERSION}
+    container_name: ${KAFKA_3_CONTAINER_NAME}
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_3_INTERNAL_PORT}:${KAFKA_3_INTERNAL_PORT}"
+      - "${KAFKA_3_HOST_EXTERNAL_PORT}:${KAFKA_3_EXTERNAL_PORT}"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_3_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:${KAFKA_3_INTERNAL_PORT},PLAINTEXT_HOST://localhost:${KAFKA_3_EXTERNAL_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+      KAFKA_COMPRESSION_TYPE: ${KAFKA_COMPRESSION_TYPE}
+      KAFKA_LOG_RETENTION_MS: ${KAFKA_LOG_RETENTION_MS}
+      KAFKA_MIN_INSYNC_REPLICAS: ${KAFKA_MIN_INSYNC_REPLICAS}
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:${KAFKA_3_INTERNAL_PORT}"]
+      interval: ${KAFKA_HEALTHCHECK_INTERVAL}
+      timeout: ${KAFKA_HEALTHCHECK_TIMEOUT}
+      retries: ${KAFKA_HEALTHCHECK_RETRIES}
+
+  # Kafka UI - Management interface
+  kafka-ui:
+    image: provectuslabs/kafka-ui:${KAFKA_UI_IMAGE_VERSION}
+    container_name: ${KAFKA_UI_CONTAINER_NAME}
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    ports:
+      - "${KAFKA_UI_PORT}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${KAFKA_CLUSTER_NAME}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:${ZOOKEEPER_CLIENT_PORT}
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    driver: ${KAFKA_NETWORK_DRIVER}
+    name: ${KAFKA_NETWORK_NAME}
+
+volumes:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:

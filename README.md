@@ -15,7 +15,7 @@ The main application code is organized in separate repositories:
 
 ### Backend
 
-- **Repository**: [fantasysport-hub-backend](https://github.com/yourusername/fantasysport-hub-backend)
+- **Repository**: [fantasysport-hub-backend](https://github.com/jclagoria/fantasy-sport-hub-backend.git)
 - **Description**: Event-sourced backend service built with Java/Spring
 - **Features**:
   - Event sourcing implementation
@@ -24,7 +24,7 @@ The main application code is organized in separate repositories:
 
 ### Frontend
 
-- **Repository**: [fantasysport-hub-frontend](https://github.com/yourusername/fantasysport-hub-frontend)
+- **Repository**: [fantasysport-hub-frontend](https://github.com/jclagoria/fantasy-sport-hub-frontend.git)
 - **Description**: Modern web interface built with React/TypeScript
 - **Features**:
   - Real-time updates
